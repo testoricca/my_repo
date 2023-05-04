@@ -5,26 +5,80 @@ date: "2023-05-02"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Gatti
+## Alcuni gatti
+[Eurasian Lynx - Wikipedia](https://en.wikipedia.org/wiki/Eurasian_lynx)
+
+<center>
+![Eurasian Lynx](https://upload.wikimedia.org/wikipedia/commons/6/63/Lynx_lynx2.jpg){height=300px}
+</center>
+
+Elenco puntato e numerato:
+
+<!-- t’s also possible to combine numbered and unordered lists: hit tab twice to indent the unordered bullets -->
+1. Gatti nudi
+2. Gatti a pelo corto
+    * Certosino
+    * Europeo
+3. Gatto a pelo lungo
+    * Persiano
+    * Norvegese
+  
+```{r, echo = F}
+big.cats <- read.table('data/Wikipedia_LargestCats.txt', header = T, sep = '\t')
+big.cats
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r, warning = F, message = F}
+library(tidyverse)
+big.cats <- big.cats %>% 
+  separate(Weight.range.kg, into=c("Weight.min", "Weight.max"), sep = "-", remove = T) %>%
+  mutate(Weight.min=as.numeric(Weight.min), 
+         Weight.max=as.numeric(Weight.max)) %>% 
+  mutate(Common.name=factor(Common.name, levels=big.cats$Common.name))
+big.cats
 ```
 
-## Including Plots
+Il gatto avente il massimo peso corporeo è `r big.cats[1, "Common.name"]`, il quale può raggiungere un peso di `r big.cats[1, "Maximum.weight.kg"]` kg.
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, fig.height=3, fig.width=4, fig.cap="Weight (kg) of the 10 largest wild cats", fig.align="center", dpi=150, echo=F}
+library(cats)
+ggcats <- ggplot(data=big.cats) + 
+  cats::add_cat() +
+  geom_segment(aes(y=Common.name, yend=Common.name, x=Weight.min, xend=Weight.max), 
+               arrow = arrow(length = unit(5, "points"), 
+                             ends="both", type = "closed", angle = 40)) + 
+  ylab(NULL) +
+  xlab(NULL) + 
+  theme(axis.text = element_text(size=14))
+ggcats
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Lavorare con tabelle
+
+```{r, warning = F, message = F}
+#stampare in console
+head(big.cats[1:4,1:5])
+     
+#formattare con kable
+knitr::kable(head(big.cats[1:4,1:5]), caption="The largest cats!")
+
+#migliorare con kableExtra
+library(kableExtra)
+knitr::kable(big.cats, caption="The largest cats!") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+    position = "center")
+```
+
+Add citations
+
+```{r}
+library(knitcitations)
+```
+
+Cats are not necessarily animals `r citep('10.1007/s10670-022-00588-w')`. But if they are, they should be left free to roam `r citep('10.1007/s12136-019-00408-x')`
+
+```{r}
+bibliography()
+```
